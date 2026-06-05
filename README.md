@@ -78,6 +78,23 @@
 2. ✅ 对少数重要指令进行了测试，详见 `resource/*.txt`
    - 📋 后续计划：使用官方指令集完整测试
 3. ✅ 使用 Verilator 编译并生成波形：`logs/top.fst`
-4. ⚠️ 使用 Yosys 综合时因 `InstrMem` 过大导致综合失败
-   - 📋 后续计划：优化 InstrMem 规模
-5. 📊 `yosys-sta` 项目提供面积、时序、功耗的分析与检查命令
+4. ✅ Yosys 综合已通过 — InstrMem/DataMem 采用参数化深度，综合默认 4096 条目，仿真覆盖为 1048576
+5. ✅ STA 时序分析已通过
+6. 📊 `yosys-sta` 项目提供面积、时序、功耗的分析与检查命令
+
+---
+
+## 🧠 设计要点
+
+### 内存参数化 (InstrMem / DataMem)
+
+为解决综合时内存过大（1M×32bit×2=8MB）的问题，InstrMem 和 DataMem 采用参数化深度设计：
+
+| 场景 | DEPTH | 说明 |
+|------|-------|------|
+| **综合 (Yosys)** | 4096（默认） | 16KB，可通过综合 |
+| **仿真 (Verilator)** | 1048576 | 4MB，容纳完整测试程序 |
+
+- `$readmemh` 由 `` `ifdef VERILATOR `` 保护，综合时自动跳过文件加载
+- `top.v` 中通过 `` `ifdef VERILATOR `` 条件选择实例化参数
+- 地址位宽通过 `$clog2(DEPTH)` 自动适配

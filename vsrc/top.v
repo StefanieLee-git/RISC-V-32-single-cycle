@@ -13,12 +13,18 @@ module top (
   /* verilator lint_off UNUSED */
   wire [31:0] nextPC;
   /* verilator lint_on UNUSED */
+`ifdef VERILATOR
+  // 仿真：大容量内存以容纳完整程序
+  InstrMem #(.DEPTH(1048576)) top_InstrMem (
+`else
+  // 综合：使用默认小容量（4096）
   InstrMem top_InstrMem (
+`endif
     .clk(clk),
     .reset(reset),
     .PC(nextPC[19:0]),
     .instr(instr)
-  ); 
+  );
 
   wire [31:0] wdata, rdata;
   wire [31:0] addr;
@@ -36,9 +42,15 @@ module top (
     .MemOP(MemOP),
     // 调试
     .data_a0(data_a0)
-  ); 
-  
+  );
+
+`ifdef VERILATOR
+  // 仿真：大容量内存以容纳完整程序
+  DataMem #(.DEPTH(1048576)) top_DataMem (
+`else
+  // 综合：使用默认小容量（4096）
   DataMem top_DataMem (
+`endif
     .clk(clk),
     .addr(addr),
     .wdata(wdata),
